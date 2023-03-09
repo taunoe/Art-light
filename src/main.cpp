@@ -1,41 +1,119 @@
 /*
-Raspberry Pi Pico and LD2410 Radar Sensor Example
+File: main.cpp
 Tauno Erik
-06.03.2023
+09.03.2023
+https://taunoerik.art/
+
+Hardware:
+  Raspberry Pi Pico
+  LD2410 Radar Sensor
+  WS2812B RGB LED strip
 
 Pins:
 Pico GPIO0 (TX) -> Radar RX
 Pico GPIO1 (RX) -> Radar TX
 Pico VBUS (5V)  -> Radar VCC
 Pico GND        -> Radar GND
-
 */
+
 #include <Arduino.h>
-#include <LD2410.h>  // https://github.com/Renstec/LD2410/
+#include "LD2410.h"             // https://github.com/Renstec/LD2410/
+#include <Adafruit_NeoPixel.h>  // https://github.com/adafruit/Adafruit_NeoPixel/blob/master/examples/strandtest_nodelay/strandtest_nodelay.ino
 
 #define RADAR_BAUD 256000
 #define USB_BAUD   115200
 
-#define LED_1 21  // GP21
-#define LED_2 20
-#define LED_3 19
-#define LED_4 18
+// Pins:
+//const uint8_t RADAR_RX_PIN = 1;  // Allready default RX pin
+//const uint8_t RADAR_TX_PIN = 0;  // Allready default TX pin
+const int LED_1_PIN = 21;
+const int LED_2_PIN = 20;
+const int LED_3_PIN = 19;
+const int LED_4_PIN = 18;
+const int RGB_PIN = 2;
 
+// RGB
+const int NUM_OF_RGBS = 80;
+
+int rgb_R = 0;
+int rgb_G = 0;
+int rgb_B = 0;
+
+int  pixelInterval = 50;       // Pixel Interval (ms)
+uint16_t      pixelCurrent = 0;         // Pattern Current Pixel Number
+uint16_t      pixelNumber = NUM_OF_RGBS;  // Total Number of Pixels
+int           pixelCycle = 0;           // Pattern Pixel Cycle
+
+Adafruit_NeoPixel strip(NUM_OF_RGBS, RGB_PIN, NEO_GRB + NEO_KHZ800);
+
+// Time
+bool is_movement = false;
+bool is_change_color = false;
+
+const int OFF_TIME = 20000;
+int time_px_prev = 0;  // Millis
+int px_interval = 50;  // Millis
+int no_movment_time = 0;
+
+// LEDS
 const int num_of_leds = 4;
-
 int leds[num_of_leds] = {
-  LED_1, LED_2, LED_3, LED_4
+  LED_1_PIN, LED_2_PIN, LED_3_PIN, LED_4_PIN
 };
 
-
+// Radar
 LD2410 radar(Serial1);
-
-// Default RX GPIO1, TX GPIO0
-//const uint8_t RADAR_RX_PIN = 1;
-//const uint8_t RADAR_TX_PIN = 0;
 
 // True enables Radar Enginering Mode
 bool is_radar_eng_bode = false;
+
+// RGB Funcs
+
+// Input a value 0 to 255 to get a color value.
+// The colours are a transition r - g - b - back to r.
+uint32_t Wheel(byte WheelPos) {
+  WheelPos = 255 - WheelPos;
+  if(WheelPos < 85) {
+    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
+  }
+  if(WheelPos < 170) {
+    WheelPos -= 85;
+    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
+  }
+  WheelPos -= 170;
+  return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+}
+
+// Fill strip pixels one after another with a color. Strip is NOT cleared
+// first; anything there will be covered pixel by pixel. Pass in color
+// (as a single 'packed' 32-bit value, which you can get by calling
+// strip.Color(red, green, blue) as shown in the loop() function above),
+// and a delay time (in milliseconds) between pixels.
+void colorWipe(uint32_t color, int wait) {
+  if(pixelInterval != wait)
+    pixelInterval = wait;                   //  Update delay time
+  strip.setPixelColor(pixelCurrent, color); //  Set pixel's color (in RAM)
+  strip.show();                             //  Update strip to match
+  pixelCurrent++;                           //  Advance current pixel
+  if(pixelCurrent >= pixelNumber)           //  Loop the pattern from the first LED
+    pixelCurrent = 0;
+}
+ 
+ 
+// Rainbow cycle along whole pixels. Pass delay time (in ms) between frames.
+// Rainbow cycle along whole strip. Pass delay time (in ms) between frames.
+void rainbow(uint8_t wait) {
+  if(pixelInterval != wait)
+    pixelInterval = wait;                   
+  for(uint16_t i=0; i < pixelNumber; i++) {
+    strip.setPixelColor(i, Wheel((i + pixelCycle) & 255)); //  Update delay time  
+  }
+  strip.show();                             //  Update strip to match
+  pixelCycle++;                             //  Advance current cycle
+  if(pixelCycle >= 256)
+    pixelCycle = 0;                         //  Loop the cycle back to the begining
+}
+
 
 void setup() {
   Serial.begin(USB_BAUD);
@@ -102,10 +180,24 @@ void setup() {
   Serial.println();
 
   radar.enableEngMode(is_radar_eng_bode);  // If true enables
+
+  // 
+  strip.begin();
+  strip.show();            // Turn OFF all pixels ASAP
+  strip.setBrightness(50); // Set BRIGHTNESS to about 1/5 (max = 255)
+ 
+  randomSeed(analogRead(0));
+  rainbow(3);
+  colorWipe(strip.Color(0, 0, 0), 0);
 }
 
 void loop() {
-  //delay(100);
+  strip.clear(); // Set all pixel colors to 'off'
+  strip.setPixelColor(0, strip.Color(0, 150, 0));
+  strip.setPixelColor(1, strip.Color(150, 0, 0));
+  strip.setPixelColor(2, strip.Color(0, 0, 150));
+  strip.show();   // Send the updated pixel colors to the hardware.
+  
   // read must be called cyclically
   if (radar.read()) {
     // Cyclic radar data
