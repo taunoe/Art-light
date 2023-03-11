@@ -1,7 +1,7 @@
 /*
 File: main.cpp
 Tauno Erik
-09.03.2023
+10.03.2023
 https://taunoerik.art/
 
 Hardware:
@@ -30,7 +30,7 @@ const int LED_1_PIN = 21;
 const int LED_2_PIN = 20;
 const int LED_3_PIN = 19;
 const int LED_4_PIN = 18;
-const int RGB_PIN = 2;
+const int RGB_PIN   = 15;
 
 // RGB
 const int NUM_OF_RGBS = 80;
@@ -39,12 +39,11 @@ int rgb_R = 0;
 int rgb_G = 0;
 int rgb_B = 0;
 
-int  pixelInterval = 50;       // Pixel Interval (ms)
-uint16_t      pixelCurrent = 0;         // Pattern Current Pixel Number
-uint16_t      pixelNumber = NUM_OF_RGBS;  // Total Number of Pixels
-int           pixelCycle = 0;           // Pattern Pixel Cycle
+int      pixel_interval = 50;  // Pixel Interval (ms)
+uint16_t pixel_current = 0;    // Pattern Current Pixel Number
+int      pixel_cycle = 0;      // Pattern Pixel Cycle
 
-Adafruit_NeoPixel strip(NUM_OF_RGBS, RGB_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel RGB_strip(NUM_OF_RGBS, RGB_PIN, NEO_GRB + NEO_KHZ800);
 
 // Time
 bool is_movement = false;
@@ -69,20 +68,26 @@ bool is_radar_eng_bode = false;
 
 // RGB Funcs
 
-// Input a value 0 to 255 to get a color value.
+
+// Input: 0 to 255 to get a color value.
 // The colours are a transition r - g - b - back to r.
-uint32_t Wheel(byte WheelPos) {
-  WheelPos = 255 - WheelPos;
-  if(WheelPos < 85) {
-    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
+uint32_t Wheel(uint8_t wheel_pos) {
+
+  wheel_pos = 255 - wheel_pos;
+
+  if(wheel_pos < 85) {
+    return RGB_strip.Color(255 - wheel_pos * 3, 0, wheel_pos * 3);
   }
-  if(WheelPos < 170) {
-    WheelPos -= 85;
-    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
+  if(wheel_pos < 170) {
+    wheel_pos -= 85;
+    return RGB_strip.Color(0, wheel_pos * 3, 255 - wheel_pos * 3);
   }
-  WheelPos -= 170;
-  return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+
+  wheel_pos -= 170;
+
+  return RGB_strip.Color(wheel_pos * 3, 255 - wheel_pos * 3, 0);
 }
+
 
 // Fill strip pixels one after another with a color. Strip is NOT cleared
 // first; anything there will be covered pixel by pixel. Pass in color
@@ -90,28 +95,40 @@ uint32_t Wheel(byte WheelPos) {
 // strip.Color(red, green, blue) as shown in the loop() function above),
 // and a delay time (in milliseconds) between pixels.
 void colorWipe(uint32_t color, int wait) {
-  if(pixelInterval != wait)
-    pixelInterval = wait;                   //  Update delay time
-  strip.setPixelColor(pixelCurrent, color); //  Set pixel's color (in RAM)
-  strip.show();                             //  Update strip to match
-  pixelCurrent++;                           //  Advance current pixel
-  if(pixelCurrent >= pixelNumber)           //  Loop the pattern from the first LED
-    pixelCurrent = 0;
+
+  if(pixel_interval != wait) {
+    pixel_interval = wait;                   //  Update delay time
+  }
+
+  RGB_strip.setPixelColor(pixel_current, color); //  Set pixel's color (in RAM)
+  RGB_strip.show();
+  pixel_current++;
+
+  if(pixel_current >= NUM_OF_RGBS) {
+    pixel_current = 0;                               //  Loop the pattern from the first LED
+  }
+
 }
  
  
 // Rainbow cycle along whole pixels. Pass delay time (in ms) between frames.
 // Rainbow cycle along whole strip. Pass delay time (in ms) between frames.
 void rainbow(uint8_t wait) {
-  if(pixelInterval != wait)
-    pixelInterval = wait;                   
-  for(uint16_t i=0; i < pixelNumber; i++) {
-    strip.setPixelColor(i, Wheel((i + pixelCycle) & 255)); //  Update delay time  
+
+  if(pixel_interval != wait) {
+    pixel_interval = wait;
   }
-  strip.show();                             //  Update strip to match
-  pixelCycle++;                             //  Advance current cycle
-  if(pixelCycle >= 256)
-    pixelCycle = 0;                         //  Loop the cycle back to the begining
+
+  for(uint16_t i=0; i < NUM_OF_RGBS; i++) {
+    RGB_strip.setPixelColor(i, Wheel((i + pixel_cycle) & 255)); //  Update delay time
+  }
+
+  RGB_strip.show();                          //  Update strip to match
+  pixel_cycle++;                             //  Advance current cycle
+
+  if(pixel_cycle >= 256) {
+    pixel_cycle = 0;                         //  Loop the cycle back to the begining
+  }
 }
 
 
@@ -182,21 +199,29 @@ void setup() {
   radar.enableEngMode(is_radar_eng_bode);  // If true enables
 
   // 
-  strip.begin();
-  strip.show();            // Turn OFF all pixels ASAP
-  strip.setBrightness(50); // Set BRIGHTNESS to about 1/5 (max = 255)
+  RGB_strip.begin();
+  RGB_strip.show();            // Turn OFF all pixels ASAP
+  RGB_strip.setBrightness(50); // Set BRIGHTNESS to about 1/5 (max = 255)
  
   randomSeed(analogRead(0));
   rainbow(3);
-  colorWipe(strip.Color(0, 0, 0), 0);
+  colorWipe(RGB_strip.Color(0, 0, 0), 0);
+
 }
 
 void loop() {
-  strip.clear(); // Set all pixel colors to 'off'
-  strip.setPixelColor(0, strip.Color(0, 150, 0));
-  strip.setPixelColor(1, strip.Color(150, 0, 0));
-  strip.setPixelColor(2, strip.Color(0, 0, 150));
-  strip.show();   // Send the updated pixel colors to the hardware.
+  RGB_strip.clear(); // Set all pixel colors to 'off'
+  rainbow(10); // Flowing rainbow cycle along the whole strip
+  colorWipe(RGB_strip.Color(255, 0, 0), 50);  // Red
+  colorWipe(RGB_strip.Color(0, 255, 0), 50);  // Green
+  colorWipe(RGB_strip.Color(0, 0, 255), 50);  // Blue
+  RGB_strip.clear(); // Set all pixel colors to 'off'
+
+  RGB_strip.clear(); // Set all pixel colors to 'off'
+  RGB_strip.setPixelColor(0, RGB_strip.Color(0, 150, 0));
+  RGB_strip.setPixelColor(1, RGB_strip.Color(150, 0, 0));
+  RGB_strip.setPixelColor(2, RGB_strip.Color(0, 0, 150));
+  RGB_strip.show();   // Send the updated pixel colors to the hardware.
   
   // read must be called cyclically
   if (radar.read()) {
