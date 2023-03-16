@@ -230,6 +230,7 @@ void loop() {
     switch (radar.cyclicData.targetState) {
       case 0x00:
         Serial.println(" no target detected");
+        Rgb_color_wipe(RGB_strip.Color(0, 0, 0), 10);
         break;
       case 0x01:
         Serial.println(" moving target detected");
