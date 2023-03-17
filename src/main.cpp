@@ -230,19 +230,29 @@ void loop() {
     switch (radar.cyclicData.targetState) {
       case 0x00:
         Serial.println(" no target detected");
-        Rgb_color_wipe(RGB_strip.Color(0, 0, 0), 10);
+        Rgb_color_wipe(RGB_strip.Color(0, 0, 0), 10); // LEDs off
+        //Rgb_color_wipe_delay(RGB_strip.Color(0, 0, 0), 10); // LEDs off
         break;
       case 0x01:
         Serial.println(" moving target detected");
-        Rgb_color_wipe(RGB_strip.Color(0, 0, 255), 50);
+        rgb_R = random(0, 255);
+        rgb_G = random(0, 255);
+        rgb_B = random(0, 255);
+        //Rgb_color_wipe(RGB_strip.Color(rgb_R, rgb_G, rgb_B), 50);
+        Rgb_color_wipe_delay(RGB_strip.Color(rgb_R, rgb_G, rgb_B), 50);
         break;
       case 0x02:
         Serial.println(" stationary target detected");
-        Rgb_color_wipe(RGB_strip.Color(0, 255, 0), 50);
+        Rgb_color_wipe(RGB_strip.Color(rgb_R, rgb_G, rgb_B), 50);
+        //Rgb_color_wipe_delay(RGB_strip.Color(rgb_R, rgb_G, rgb_B), 50);
         break;
       case 0x03:
         Serial.println(" moving and stationary target detected");
-        Rgb_color_wipe(RGB_strip.Color(255, 0, 0), 50);
+        rgb_R = random(0, 255);
+        rgb_G = random(0, 255);
+        rgb_B = random(0, 255);
+        //Rgb_color_wipe(RGB_strip.Color(rgb_R, rgb_G, rgb_B), 50);
+        Rgb_color_wipe_delay(RGB_strip.Color(rgb_R, rgb_G, rgb_B), 50);
         break;
     }
 
