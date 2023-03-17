@@ -1,7 +1,7 @@
 /*
 File: main.cpp
 Tauno Erik
-16.03.2023
+17.03.2023
 https://taunoerik.art/
 
 Hardware:
@@ -31,6 +31,8 @@ Pico GND        -> Radar GND
 //const int RADAR_TX_PIN = 1;  // Allready default TX pin
 const int RADAR_OUT_PIN = 2;  // GP2
 const int RGB_IN_PIN   = 22;  // GP22
+
+const int RANDOM_SEED_ANALOG_PIN = 26;  // GP26
 
 // RGB LEDs
 const int NUM_OF_LEDS = 49;
@@ -205,7 +207,7 @@ void setup() {
   RGB_strip.show();  // Turn OFF all pixels ASAP
   RGB_strip.setBrightness(BRIGHTNESS);
  
-  randomSeed(analogRead(0));
+  randomSeed(analogRead(RANDOM_SEED_ANALOG_PIN));
   
   Serial.println("Setup finished!");
 }
