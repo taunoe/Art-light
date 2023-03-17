@@ -32,6 +32,8 @@ Pico GND        -> Radar GND
 const int RADAR_OUT_PIN = 2;  // GP2
 const int RGB_IN_PIN   = 22;  // GP22
 
+const int RANDOM_SEED_ANALOG_PIN = 26;  // GP26
+
 // RGB LEDs
 const int NUM_OF_LEDS = 49;
 
@@ -198,7 +200,7 @@ void setup() {
   RGB_strip.show();             // Turn OFF all pixels ASAP
   RGB_strip.setBrightness(50);  // Set BRIGHTNESS to about 1/5 (max = 255)
  
-  randomSeed(analogRead(0));
+  randomSeed(analogRead(RANDOM_SEED_ANALOG_PIN));
   
   Serial.println("Setup finished!");
 }
