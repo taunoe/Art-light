@@ -1,7 +1,7 @@
 /*
 File: main.cpp
 Tauno Erik
-16.03.2023
+17.03.2023
 https://taunoerik.art/
 
 Hardware:
@@ -36,23 +36,16 @@ const int RANDOM_SEED_ANALOG_PIN = 26;  // GP26
 
 // RGB LEDs
 const int NUM_OF_LEDS = 49;
+const int BRIGHTNESS = 100;  // 0-255
 
 int rgb_R = 0;
 int rgb_G = 0;
 int rgb_B = 0;
 
-int      pixel_interval = 50;  // Pixel Interval (ms)
+// Kasutaud funksioonides
+int      pixel_interval = 50;  // ms
 uint16_t pixel_current = 0;    // Pattern Current Pixel Number
 int      pixel_cycle = 0;      // Pattern Pixel Cycle
-
-// Time
-bool is_movement = false;
-bool is_change_color = false;
-
-const int OFF_TIME = 20000;
-int time_px_prev = 0;  // Millis
-int px_interval = 50;  // Millis
-int no_movment_time = 0;
 
 // Init RGB strip
 Adafruit_NeoPixel RGB_strip(NUM_OF_LEDS, RGB_IN_PIN, NEO_GRB + NEO_KHZ800);
@@ -62,6 +55,7 @@ LD2410 radar(Serial1);
 
 bool is_radar_eng_mode = false;  // True enables Radar Enginering Mode
 
+bool is_first_loop = true;
 
 // Input: 0 to 255 to get a color value.
 // The colours are a transition r - g - b - back to r.
@@ -103,11 +97,24 @@ void Rgb_color_wipe(uint32_t color, int wait) {
   }
 
 }
+
+// Fill pixels pixels one after another with a color. pixels is NOT cleared
+// first; anything there will be covered pixel by pixel. Pass in color
+// (as a single 'packed' 32-bit value, which you can get by calling
+// pixels.Color(red, green, blue) as shown in the loop() function above),
+// and a delay time (in milliseconds) between pixels.
+void Rgb_color_wipe_delay(uint32_t color, int wait) {
+  for(int i=0; i<RGB_strip.numPixels(); i++) {
+    RGB_strip.setPixelColor(i, color);
+    RGB_strip.show();
+    delay(wait);
+  }
+}
  
  
 // Rainbow cycle along whole pixels. Pass delay time (in ms) between frames.
 // Rainbow cycle along whole strip. Pass delay time (in ms) between frames.
-void rainbow(uint8_t wait) {
+void Rainbow(uint8_t wait) {
 
   if(pixel_interval != wait) {
     pixel_interval = wait;
@@ -197,8 +204,8 @@ void setup() {
   // RGB strip
   
   RGB_strip.begin();
-  RGB_strip.show();             // Turn OFF all pixels ASAP
-  RGB_strip.setBrightness(50);  // Set BRIGHTNESS to about 1/5 (max = 255)
+  RGB_strip.show();  // Turn OFF all pixels ASAP
+  RGB_strip.setBrightness(BRIGHTNESS);
  
   randomSeed(analogRead(RANDOM_SEED_ANALOG_PIN));
   
@@ -206,6 +213,9 @@ void setup() {
 }
 
 void loop() {
+  if (is_first_loop) {
+    is_first_loop = false;
+  }
   /*
   RGB_strip.clear(); // Set all pixel colors to 'off'
   rainbow(10); // Flowing rainbow cycle along the whole strip
