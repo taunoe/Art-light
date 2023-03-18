@@ -35,8 +35,9 @@ const int RGB_IN_PIN   = 22;  // GP22
 const int RANDOM_SEED_ANALOG_PIN = 26;  // GP26
 
 // RGB LEDs
+// Ring 49 tk, Ristkülik 59 tk
 const int NUM_OF_LEDS = 49;
-const int BRIGHTNESS = 100;  // 0-255
+const int BRIGHTNESS = 75;  // 0-255
 
 int rgb_R = 0;
 int rgb_G = 0;
