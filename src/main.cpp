@@ -1,7 +1,7 @@
 /*
 File: main.cpp
 Tauno Erik
-17.03.2023
+21.03.2023
 https://taunoerik.art/
 
 Hardware:
@@ -26,6 +26,8 @@ Pico GND        -> Radar GND
 #define RADAR_BAUD 256000
 #define USB_BAUD   115200
 
+#define TO_RADAR_RESET 1  // 0 no, 1 yes
+
 // Pins:
 //const int RADAR_RX_PIN = 0;  // Allready default RX pin
 //const int RADAR_TX_PIN = 1;  // Allready default TX pin
@@ -36,7 +38,7 @@ const int RANDOM_SEED_ANALOG_PIN = 26;  // GP26
 
 // RGB LEDs
 // Ring 49 tk, Ristkülik 59 tk
-const int NUM_OF_LEDS = 49;
+const int NUM_OF_LEDS = 59;
 const int BRIGHTNESS = 75;  // 0-255
 
 int rgb_R = 0;
@@ -146,20 +148,32 @@ void setup() {
   Serial.println("Art Light started!");
   delay(1000);
 
-  // Restore radar default values
-  //bool is_radar_factory_reset = radar.factoryReset();
-  //Serial.print("Factory reset: ");
-  //Serial.println(is_radar_factory_reset);
+  if (TO_RADAR_RESET) {
+    // Restore radar default values
+    bool is_radar_factory_reset = radar.factoryReset();
 
-  // Change radar baud rate:
-  // BAUD_9600, BAUD_19200, BAUD_38400, BAUD_57600,
-  // BAUD_115200, BAUD_230400, BAUD_256000, BAUD_460800
-  //bool is_radar_baud = radar.setBaudRate(BAUD_256000);
+    if (is_radar_factory_reset) {
+      Serial.println("Factory reset was successful");
+    } else {
+      Serial.println("Can't do factory reset");
+    }
 
-  //radar.setGateSensConf();
+    // Change radar baud rate:
+    // BAUD_9600, BAUD_19200, BAUD_38400, BAUD_57600,
+    // BAUD_115200, BAUD_230400, BAUD_256000, BAUD_460800
+    bool is_radar_baud = radar.setBaudRate(BAUD_256000);
+    if (is_radar_baud) {
+      Serial.println("Radar baud rate is 256000");
+    } else {
+      Serial.println("Can't cange radar baud rate");
+    }
 
-  // Restart radar
-  //bool is_radar_restart = radar.restart();
+    //radar.setGateSensConf();
+
+    // Restart radar
+    bool is_radar_restart = radar.restart();
+
+  }
 
 
   if (radar.begin()) {
@@ -314,5 +328,8 @@ void loop() {
       }
       Serial.println();
     }
+  } else {
+    Serial.println("Error reading radar!");
+    delay(100);
   }
 }
