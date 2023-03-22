@@ -39,7 +39,7 @@ const int RANDOM_SEED_ANALOG_PIN = 26;  // GP26
 // RGB LEDs
 // Ring 49 tk, Ristkülik 59 tk
 const int NUM_OF_LEDS = 59;
-const int BRIGHTNESS = 75;  // 0-255
+const int BRIGHTNESS = 50;  // 0-255
 
 int rgb_R = 0;
 int rgb_G = 0;
@@ -331,8 +331,6 @@ void loop() {
       Serial.println();
     }
   } else {
-    Serial.println("Error reading radar ..");
-    //radar.restart();
-    delay(2000);
+    //Serial.println("No radar data.");
   }
 }
