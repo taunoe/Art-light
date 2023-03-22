@@ -1,7 +1,7 @@
 /*
 File: main.cpp
 Tauno Erik
-21.03.2023
+22.03.2023
 https://taunoerik.art/
 
 Hardware:
@@ -26,11 +26,11 @@ Pico GND        -> Radar GND
 #define RADAR_BAUD 256000
 #define USB_BAUD   115200
 
-#define TO_RADAR_RESET 1  // 0 no, 1 yes
+#define TO_RADAR_RESET 0  // 0 no, 1 yes
 
 // Pins:
-//const int RADAR_RX_PIN = 0;  // Allready default RX pin
-//const int RADAR_TX_PIN = 1;  // Allready default TX pin
+//const int RADAR_RX_PIN = 4;  // Pico default TX pin is GP0
+//const int RADAR_TX_PIN = 5;  // Pico default RX pin is GP1
 const int RADAR_OUT_PIN = 2;  // GP2
 const int RGB_IN_PIN   = 22;  // GP22
 
@@ -167,14 +167,16 @@ void setup() {
     } else {
       Serial.println("Can't cange radar baud rate");
     }
-
     //radar.setGateSensConf();
-
     // Restart radar
     bool is_radar_restart = radar.restart();
-
   }
 
+  Serial.print("Connecting to radar .");
+  while (!radar.begin()) {
+    Serial.print(".");
+    delay(500);
+  }
 
   if (radar.begin()) {
     Serial.print("Radar Firmware Version ");
@@ -329,7 +331,8 @@ void loop() {
       Serial.println();
     }
   } else {
-    Serial.println("Error reading radar!");
-    delay(100);
+    Serial.println("Error reading radar ..");
+    //radar.restart();
+    delay(2000);
   }
 }
