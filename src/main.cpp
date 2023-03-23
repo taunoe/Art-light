@@ -20,7 +20,7 @@ Pico GND        -> Radar GND
 #include "LD2410.h"             // https://github.com/Renstec/LD2410/
 #include <Adafruit_NeoPixel.h>  // https://github.com/adafruit/Adafruit_NeoPixel/blob/master/examples/strandtest_nodelay/strandtest_nodelay.ino
 
-#define DEBUG
+//#define DEBUG
 #include "utils_debug.h"
 
 #define RADAR_BAUD 256000
@@ -31,7 +31,11 @@ Pico GND        -> Radar GND
 // Ring 49 LEDs, Ruut 59 LEDS
 #define RING 49
 #define RUUT 59
-#define KUJU RUUT
+#define KUJU RING
+
+#define FORWARD    0
+#define BACKWARD   1
+#define RGB_DELAY 70  // smaller = faster
 
 // Pins:
 //const int RADAR_RX_PIN = 4;  // Pico default TX pin is GP0
@@ -87,28 +91,38 @@ uint32_t Wheel(uint8_t wheel_pos) {
 // Strip is NOT cleared; anything there will be covered pixel by pixel. 
 // color is 32-bit value, which you can get by calling
 // strip.Color(red, green, blue)
-void Rgb_color_wipe(uint32_t color, int wait) {
+void Rgb_color_wipe(uint32_t color, int wait, int dir = 0) {
+  if (dir == FORWARD) {
+    if(pixel_interval != wait) {
+      pixel_interval = wait;                   //  Update delay time
+    }
 
-  if(pixel_interval != wait) {
-    pixel_interval = wait;                   //  Update delay time
+    RGB_strip.setPixelColor(pixel_current, color); //  Set pixel's color (in RAM)
+    RGB_strip.show();
+    pixel_current++;
+
+    if(pixel_current >= NUM_OF_LEDS) {
+      pixel_current = 0;                               //  Loop the pattern from the first LED
+    }
   }
-
-  RGB_strip.setPixelColor(pixel_current, color); //  Set pixel's color (in RAM)
-  RGB_strip.show();
-  pixel_current++;
-
-  if(pixel_current >= NUM_OF_LEDS) {
-    pixel_current = 0;                               //  Loop the pattern from the first LED
-  }
-
 }
 
-void Rgb_color_wipe_delay(uint32_t color, int wait) {
-  for(int i=0; i<RGB_strip.numPixels(); i++) {
-    RGB_strip.setPixelColor(i, color);
-    RGB_strip.show();
-    delay(wait);
+void Rgb_color_wipe_delay(uint32_t color, int wait, int dir = 0) {
+  if (dir == FORWARD) {
+    for(int i=0; i<RGB_strip.numPixels(); i++) {
+      RGB_strip.setPixelColor(i, color);
+      RGB_strip.show();
+      delay(wait);
+    }
+  } else {
+    // Backward
+    for(int i=RGB_strip.numPixels(); i>=0; i--) {
+      RGB_strip.setPixelColor(i, color);
+      RGB_strip.show();
+      delay(wait);
+    }
   }
+  
 }
  
  
@@ -252,7 +266,7 @@ void loop() {
     switch (radar.cyclicData.targetState) {
       case 0x00:
         DEBUG_PRINTLN(" no target detected");
-        Rgb_color_wipe(RGB_strip.Color(0, 0, 0), 10); // LEDs off
+        Rgb_color_wipe(RGB_strip.Color(0, 0, 0), RGB_DELAY); // LEDs off
         //Rgb_color_wipe_delay(RGB_strip.Color(0, 0, 0), 10); // LEDs off
         break;
       case 0x01:
@@ -260,21 +274,21 @@ void loop() {
         rgb_R = random(0, 255);
         rgb_G = random(0, 255);
         rgb_B = random(0, 255);
-        //Rgb_color_wipe(RGB_strip.Color(rgb_R, rgb_G, rgb_B), 50);
-        Rgb_color_wipe_delay(RGB_strip.Color(rgb_R, rgb_G, rgb_B), 50);
+        //Rgb_color_wipe(RGB_strip.Color(rgb_R, rgb_G, rgb_B), RGB_DELAY);
+        Rgb_color_wipe_delay(RGB_strip.Color(rgb_R, rgb_G, rgb_B), RGB_DELAY, BACKWARD);
         break;
       case 0x02:
         DEBUG_PRINTLN(" stationary target detected");
-        Rgb_color_wipe(RGB_strip.Color(rgb_R, rgb_G, rgb_B), 50);
-        //Rgb_color_wipe_delay(RGB_strip.Color(rgb_R, rgb_G, rgb_B), 50);
+        Rgb_color_wipe(RGB_strip.Color(rgb_R, rgb_G, rgb_B), RGB_DELAY);
+        //Rgb_color_wipe_delay(RGB_strip.Color(rgb_R, rgb_G, rgb_B), RGB_DELAY);
         break;
       case 0x03:
         DEBUG_PRINTLN(" moving and stationary target detected");
         rgb_R = random(0, 255);
         rgb_G = random(0, 255);
         rgb_B = random(0, 255);
-        //Rgb_color_wipe(RGB_strip.Color(rgb_R, rgb_G, rgb_B), 50);
-        Rgb_color_wipe_delay(RGB_strip.Color(rgb_R, rgb_G, rgb_B), 50);
+        //Rgb_color_wipe(RGB_strip.Color(rgb_R, rgb_G, rgb_B), RGB_DELAY);
+        Rgb_color_wipe_delay(RGB_strip.Color(rgb_R, rgb_G, rgb_B), RGB_DELAY, BACKWARD);
         break;
     }
 

@@ -2,7 +2,7 @@
 File: utils_debug.h
 Source: https://www.youtube.com/watch?v=7kRlQDxGR9A
 Tauno Erik
-16.03.2023
+23.03.2023
 
 Usage:
 #define DEBUG
@@ -32,5 +32,6 @@ DEBUG_PRINT_ALL("Message");
   Serial.println(x);
 #else
   #define DEBUG_PRINT(x)
+  #define DEBUG_PRINTLN(x)
   #define DEBUG_PRINT_ALL(x)
 #endif
