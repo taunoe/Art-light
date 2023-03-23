@@ -1,7 +1,7 @@
 /*
 File: main.cpp
 Tauno Erik
-22.03.2023
+23.03.2023
 https://taunoerik.art/
 
 Hardware:
@@ -28,6 +28,11 @@ Pico GND        -> Radar GND
 
 #define TO_RADAR_RESET 0  // 0 no, 1 yes
 
+// Ring 49 LEDs, Ruut 59 LEDS
+#define RING 49
+#define RUUT 59
+#define KUJU RUUT
+
 // Pins:
 //const int RADAR_RX_PIN = 4;  // Pico default TX pin is GP0
 //const int RADAR_TX_PIN = 5;  // Pico default RX pin is GP1
@@ -36,10 +41,8 @@ const int RGB_IN_PIN   = 22;  // GP22
 
 const int RANDOM_SEED_ANALOG_PIN = 26;  // GP26
 
-// RGB LEDs
-// Ring 49 tk, Ristkülik 59 tk
-const int NUM_OF_LEDS = 59;
-const int BRIGHTNESS = 50;  // 0-255
+const int NUM_OF_LEDS = KUJU;
+const int BRIGHTNESS = 75;  // 0-255
 
 int rgb_R = 0;
 int rgb_G = 0;
@@ -80,11 +83,10 @@ uint32_t Wheel(uint8_t wheel_pos) {
 }
 
 
-// Fill strip pixels one after another with a color. Strip is NOT cleared
-// first; anything there will be covered pixel by pixel. Pass in color
-// (as a single 'packed' 32-bit value, which you can get by calling
-// strip.Color(red, green, blue) as shown in the loop() function above),
-// and a delay time (in milliseconds) between pixels.
+// Fill strip pixels one after another with a color.
+// Strip is NOT cleared; anything there will be covered pixel by pixel. 
+// color is 32-bit value, which you can get by calling
+// strip.Color(red, green, blue)
 void Rgb_color_wipe(uint32_t color, int wait) {
 
   if(pixel_interval != wait) {
@@ -101,11 +103,6 @@ void Rgb_color_wipe(uint32_t color, int wait) {
 
 }
 
-// Fill pixels pixels one after another with a color. pixels is NOT cleared
-// first; anything there will be covered pixel by pixel. Pass in color
-// (as a single 'packed' 32-bit value, which you can get by calling
-// pixels.Color(red, green, blue) as shown in the loop() function above),
-// and a delay time (in milliseconds) between pixels.
 void Rgb_color_wipe_delay(uint32_t color, int wait) {
   for(int i=0; i<RGB_strip.numPixels(); i++) {
     RGB_strip.setPixelColor(i, color);
@@ -145,7 +142,7 @@ void setup() {
   Serial1.begin(RADAR_BAUD);
   delay(1000);
 
-  Serial.println("Art Light started!");
+  DEBUG_PRINTLN("Art Light started!");
   delay(1000);
 
   if (TO_RADAR_RESET) {
@@ -153,9 +150,9 @@ void setup() {
     bool is_radar_factory_reset = radar.factoryReset();
 
     if (is_radar_factory_reset) {
-      Serial.println("Factory reset was successful");
+      DEBUG_PRINTLN("Factory reset was successful");
     } else {
-      Serial.println("Can't do factory reset");
+      DEBUG_PRINTLN("Can't do factory reset");
     }
 
     // Change radar baud rate:
@@ -163,9 +160,9 @@ void setup() {
     // BAUD_115200, BAUD_230400, BAUD_256000, BAUD_460800
     bool is_radar_baud = radar.setBaudRate(BAUD_256000);
     if (is_radar_baud) {
-      Serial.println("Radar baud rate is 256000");
+      DEBUG_PRINTLN("Radar baud rate is 256000");
     } else {
-      Serial.println("Can't cange radar baud rate");
+      DEBUG_PRINTLN("Can't cange radar baud rate");
     }
     //radar.setGateSensConf();
     // Restart radar
@@ -174,46 +171,44 @@ void setup() {
 
   Serial.print("Connecting to radar .");
   while (!radar.begin()) {
-    Serial.print(".");
+    DEBUG_PRINT(".");
     delay(500);
   }
 
   if (radar.begin()) {
-    Serial.print("Radar Firmware Version ");
-    Serial.print(radar.firmwareVersion.majorVersion);
-    Serial.print(".");
-    Serial.print(radar.firmwareVersion.minorVersion);
-    Serial.print(".");
-    Serial.println(radar.firmwareVersion.bugFixVersion);
+    DEBUG_PRINT("Radar Firmware Version ");
+    DEBUG_PRINT(radar.firmwareVersion.majorVersion);
+    DEBUG_PRINT(".");
+    DEBUG_PRINT(radar.firmwareVersion.minorVersion);
+    DEBUG_PRINT(".");
+    DEBUG_PRINTLN(radar.firmwareVersion.bugFixVersion);
 
-    Serial.print("Radar detection time: ");
-    Serial.println(radar.parameter.detectionTime);
+    DEBUG_PRINT("Radar detection time: ");
+    DEBUG_PRINTLN(radar.parameter.detectionTime);
 
-    Serial.print("Radar max detection Gate: ");
-    Serial.println(radar.parameter.maxGate);
+    DEBUG_PRINT("Radar max detection Gate: ");
+    DEBUG_PRINTLN(radar.parameter.maxGate);
 
-    Serial.print("Radar max moving Gate: ");
-    Serial.println(radar.parameter.maxMovingGate);
+    DEBUG_PRINT("Radar max moving Gate: ");
+    DEBUG_PRINTLN(radar.parameter.maxMovingGate);
 
-    Serial.print("Radar max stationary Gate: ");
-    Serial.println(radar.parameter.maxStationaryGate);
+    DEBUG_PRINT("Radar max stationary Gate: ");
+    DEBUG_PRINTLN(radar.parameter.maxStationaryGate);
 
-    Serial.println("Treshold/energy values per Gate:");
+    DEBUG_PRINTLN("Treshold/energy values per Gate:");
 
     for (uint8_t gate = 0; gate <= 8; gate++) {
-      Serial.print("Gate ");
-      Serial.print(gate);
-      Serial.print(": moving treshold:");
-      Serial.print(radar.parameter.movingSensitivity[gate]);
-      Serial.print(", stationary treshold:");
-      Serial.println(radar.parameter.stationarySensitivity[gate]);
+      DEBUG_PRINT("Gate ");
+      DEBUG_PRINT(gate);
+      DEBUG_PRINT(": moving treshold:");
+      DEBUG_PRINT(radar.parameter.movingSensitivity[gate]);
+      DEBUG_PRINT(", stationary treshold:");
+      DEBUG_PRINTLN(radar.parameter.stationarySensitivity[gate]);
     }
 
   } else {
-    Serial.println("Failed to get firmware version and parameters from radar.");
+    DEBUG_PRINTLN("Failed to get firmware version and parameters from radar.");
   }
-
-  Serial.println();
 
   // Enable or disable Radar Engineering mode
   radar.enableEngMode(is_radar_eng_mode);
@@ -226,7 +221,7 @@ void setup() {
  
   randomSeed(analogRead(RANDOM_SEED_ANALOG_PIN));
   
-  Serial.println("Setup finished!");
+  DEBUG_PRINTLN("Setup finished!");
 }
 
 void loop() {
@@ -251,19 +246,17 @@ void loop() {
   // read must be called cyclically
   if (radar.read()) {
     // Cyclic radar data
-    Serial.println();
-
-    Serial.print("Target state: ");
-    Serial.print(radar.cyclicData.targetState);
+    DEBUG_PRINT("\nTarget state: ");
+    DEBUG_PRINT(radar.cyclicData.targetState);
 
     switch (radar.cyclicData.targetState) {
       case 0x00:
-        Serial.println(" no target detected");
+        DEBUG_PRINTLN(" no target detected");
         Rgb_color_wipe(RGB_strip.Color(0, 0, 0), 10); // LEDs off
         //Rgb_color_wipe_delay(RGB_strip.Color(0, 0, 0), 10); // LEDs off
         break;
       case 0x01:
-        Serial.println(" moving target detected");
+        DEBUG_PRINTLN(" moving target detected");
         rgb_R = random(0, 255);
         rgb_G = random(0, 255);
         rgb_B = random(0, 255);
@@ -271,12 +264,12 @@ void loop() {
         Rgb_color_wipe_delay(RGB_strip.Color(rgb_R, rgb_G, rgb_B), 50);
         break;
       case 0x02:
-        Serial.println(" stationary target detected");
+        DEBUG_PRINTLN(" stationary target detected");
         Rgb_color_wipe(RGB_strip.Color(rgb_R, rgb_G, rgb_B), 50);
         //Rgb_color_wipe_delay(RGB_strip.Color(rgb_R, rgb_G, rgb_B), 50);
         break;
       case 0x03:
-        Serial.println(" moving and stationary target detected");
+        DEBUG_PRINTLN(" moving and stationary target detected");
         rgb_R = random(0, 255);
         rgb_G = random(0, 255);
         rgb_B = random(0, 255);
@@ -285,50 +278,50 @@ void loop() {
         break;
     }
 
-    Serial.print("Moving taget distance in cm: ");
-    Serial.println(radar.cyclicData.movingTargetDistance);
+    DEBUG_PRINT("Moving taget distance in cm: ");
+    DEBUG_PRINTLN(radar.cyclicData.movingTargetDistance);
 
-    Serial.print("Moving target energy valu 0-100%: ");
-    Serial.println(radar.cyclicData.movingTargetEnergy);
+    DEBUG_PRINT("Moving target energy valu 0-100%: ");
+    DEBUG_PRINTLN(radar.cyclicData.movingTargetEnergy);
 
-    Serial.print("Statsionary target distance in cm: ");
-    Serial.println(radar.cyclicData.stationaryTargetDistance);
+    DEBUG_PRINT("Statsionary target distance in cm: ");
+    DEBUG_PRINTLN(radar.cyclicData.stationaryTargetDistance);
 
-    Serial.print("Statsionary target energy valu 0-100%: ");
-    Serial.println(radar.cyclicData.stationaryTargetEnergy);
+    DEBUG_PRINT("Statsionary target energy valu 0-100%: ");
+    DEBUG_PRINTLN(radar.cyclicData.stationaryTargetEnergy);
 
-    Serial.print("Detection distance in cm: ");
-    Serial.println(radar.cyclicData.detectionDistance);
+    DEBUG_PRINT("Detection distance in cm: ");
+    DEBUG_PRINTLN(radar.cyclicData.detectionDistance);
 
     // Engineering Mode data
     if (radar.cyclicData.radarInEngineeringMode) {
-      Serial.println("--Radar is in Engineering Mode--");
+      DEBUG_PRINTLN("--Radar is in Engineering Mode--");
 
-      Serial.print("Max moving distance: ");
-      Serial.println(radar.engineeringData.maxMovingGate);
+      DEBUG_PRINT("Max moving distance: ");
+      DEBUG_PRINTLN(radar.engineeringData.maxMovingGate);
 
-      Serial.print("Max statsionary distance: ");
-      Serial.println(radar.engineeringData.maxStationaryGate);
+      DEBUG_PRINT("Max statsionary distance: ");
+      DEBUG_PRINTLN(radar.engineeringData.maxStationaryGate);
 
-      Serial.print("Max moving energy: ");
-      Serial.println(radar.engineeringData.maxMovingEnergy);
+      DEBUG_PRINT("Max moving energy: ");
+      DEBUG_PRINTLN(radar.engineeringData.maxMovingEnergy);
 
-      Serial.print("Max statsionary energy: ");
-      Serial.println(radar.engineeringData.maxStationaryEnergy);
+      DEBUG_PRINT("Max statsionary energy: ");
+      DEBUG_PRINTLN(radar.engineeringData.maxStationaryEnergy);
 
-      Serial.println("Energy per Gate:");
-      Serial.print("Moving: ");
+      DEBUG_PRINTLN("Energy per Gate:");
+      DEBUG_PRINT("Moving: ");
       for (uint8_t gate = 0; gate <= 8; gate++) {
-        Serial.print(radar.engineeringData.movingEnergyGateN[gate]);
-        Serial.print(" ");
+        DEBUG_PRINT(radar.engineeringData.movingEnergyGateN[gate]);
+        DEBUG_PRINT(" ");
       }
-      Serial.println();
-      Serial.print("Statsionary: ");
+      DEBUG_PRINTLN();
+      DEBUG_PRINT("Statsionary: ");
       for (uint8_t gate = 0; gate <= 8; gate++) {
-        Serial.print(radar.engineeringData.stationaryEnergyGateN[gate]);
-        Serial.print(" ");
+        DEBUG_PRINT(radar.engineeringData.stationaryEnergyGateN[gate]);
+        DEBUG_PRINT(" ");
       }
-      Serial.println();
+      DEBUG_PRINTLN();
     }
   } else {
     //Serial.println("No radar data.");
