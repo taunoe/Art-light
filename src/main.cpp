@@ -126,9 +126,27 @@ void Rgb_color_wipe_delay(uint32_t color, int wait, int dir = 0) {
 }
  
  
-// Rainbow cycle along whole pixels. Pass delay time (in ms) between frames.
-// Rainbow cycle along whole strip. Pass delay time (in ms) between frames.
+// Rainbow cycle along whole pixels.
+// one by one
 void Rainbow(uint8_t wait) {
+
+  if(pixel_interval != wait) {
+    pixel_interval = wait;
+  }
+
+  for(uint16_t i=0; i < NUM_OF_LEDS; i++) {
+    RGB_strip.setPixelColor(i, Wheel((i + pixel_cycle) & 255)); //  Update delay time
+  }
+
+  RGB_strip.show();                          //  Update strip to match
+  pixel_cycle++;                             //  Advance current cycle
+
+  if(pixel_cycle >= 256) {
+    pixel_cycle = 0;                         //  Loop the cycle back to the begining
+  }
+}
+
+void Rainbow_all(uint8_t wait) {
 
   if(pixel_interval != wait) {
     pixel_interval = wait;
