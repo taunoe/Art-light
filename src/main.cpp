@@ -31,7 +31,7 @@ Pico GND        -> Radar GND
 // Ring 49 LEDs, Ruut 59 LEDS
 #define RING 49
 #define RUUT 59
-#define KUJU RING
+#define KUJU RUUT
 
 #define FORWARD    0
 #define BACKWARD   1
@@ -138,31 +138,15 @@ void Rainbow(uint8_t wait) {
     RGB_strip.setPixelColor(i, Wheel((i + pixel_cycle) & 255)); //  Update delay time
   }
 
-  RGB_strip.show();                          //  Update strip to match
-  pixel_cycle++;                             //  Advance current cycle
+  RGB_strip.show();
+  pixel_cycle++;            //  Advance current cycle
 
   if(pixel_cycle >= 256) {
-    pixel_cycle = 0;                         //  Loop the cycle back to the begining
+    pixel_cycle = 0;        //  Loop the cycle back to the begining
   }
 }
 
-void Rainbow_all(uint8_t wait) {
 
-  if(pixel_interval != wait) {
-    pixel_interval = wait;
-  }
-
-  for(uint16_t i=0; i < NUM_OF_LEDS; i++) {
-    RGB_strip.setPixelColor(i, Wheel((i + pixel_cycle) & 255)); //  Update delay time
-  }
-
-  RGB_strip.show();                          //  Update strip to match
-  pixel_cycle++;                             //  Advance current cycle
-
-  if(pixel_cycle >= 256) {
-    pixel_cycle = 0;                         //  Loop the cycle back to the begining
-  }
-}
 
 
 void setup() {
@@ -285,28 +269,27 @@ void loop() {
       case 0x00:
         DEBUG_PRINTLN(" no target detected");
         Rgb_color_wipe(RGB_strip.Color(0, 0, 0), RGB_DELAY); // LEDs off
-        //Rgb_color_wipe_delay(RGB_strip.Color(0, 0, 0), 10); // LEDs off
         break;
       case 0x01:
         DEBUG_PRINTLN(" moving target detected");
         rgb_R = random(0, 255);
         rgb_G = random(0, 255);
         rgb_B = random(0, 255);
-        //Rgb_color_wipe(RGB_strip.Color(rgb_R, rgb_G, rgb_B), RGB_DELAY);
         Rgb_color_wipe_delay(RGB_strip.Color(rgb_R, rgb_G, rgb_B), RGB_DELAY, BACKWARD);
+        //Rainbow(RGB_DELAY);
         break;
       case 0x02:
         DEBUG_PRINTLN(" stationary target detected");
         Rgb_color_wipe(RGB_strip.Color(rgb_R, rgb_G, rgb_B), RGB_DELAY);
-        //Rgb_color_wipe_delay(RGB_strip.Color(rgb_R, rgb_G, rgb_B), RGB_DELAY);
+        //Rainbow(RGB_DELAY);
         break;
       case 0x03:
         DEBUG_PRINTLN(" moving and stationary target detected");
         rgb_R = random(0, 255);
         rgb_G = random(0, 255);
         rgb_B = random(0, 255);
-        //Rgb_color_wipe(RGB_strip.Color(rgb_R, rgb_G, rgb_B), RGB_DELAY);
         Rgb_color_wipe_delay(RGB_strip.Color(rgb_R, rgb_G, rgb_B), RGB_DELAY, BACKWARD);
+        // Rainbow(RGB_DELAY);
         break;
     }
 
